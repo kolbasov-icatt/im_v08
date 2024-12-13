@@ -1,0 +1,1 @@
+web: gunicorn am_im.wsgi --log-file -

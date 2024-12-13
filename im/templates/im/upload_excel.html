@@ -1,0 +1,64 @@
+<h2>Upload Products From Excel File</h2>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ products_form.as_p }}
+    <button type="submit" name="upload_products" class="btn btn-primary">Upload Products</button>
+</form>
+
+<h2>Upload Sales From Excel File</h2>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ sales_form.as_p }}
+    <button type="submit" name="upload_sales" class="btn btn-primary">Upload Sales</button>
+</form>
+
+<h2>Upload Inventory From Excel File</h2>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ inventory_form.as_p }}
+    <button type="submit" name="upload_inventory" class="btn btn-primary">Upload Inventory</button>
+</form>
+
+<h2>Upload Working Days From Excel File</h2>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ wd_form.as_p }}
+    <button type="submit" name="upload_working_days" class="btn btn-primary">Upload Working Days</button>
+</form>
+
+<button id="update-sales-statistics">Update Sales Statistics</button>
+
+
+{% if messages %}
+    <ul>
+        {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+<script>
+    document.getElementById('update-sales-statistics').addEventListener('click', function() {
+        const startDate = prompt("Enter start date (YYYY-MM-DD):");
+        const endDate = prompt("Enter end date (YYYY-MM-DD):");
+        
+        if (startDate && endDate) {
+            fetch(`/update-sales-statistics/?start_date=${startDate}&end_date=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(`Error: ${data.error}`);
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Check the console for details.');
+                });
+        } else {
+            alert("Start date and end date are required!");
+        }
+    });
+</script>
+

@@ -1,0 +1,47 @@
+
+<h2>Calculate Sales Statistics</h2>
+<form id="statisticsForm" method="post">
+    {% csrf_token %}
+    <label for="start_date">Start Date:</label>
+    <input type="date" id="start_date" name="start_date" required>
+    <br><br>
+    <label for="end_date">End Date:</label>
+    <input type="date" id="end_date" name="end_date" required>
+    <br><br>
+    <button type="submit">Calculate Statistics</button>
+</form>
+
+<div id="responseMessage" style="margin-top: 20px; color: green;"></div>
+
+<script>
+    // Optional: Submit the form using AJAX for a better user experience
+    document.getElementById('statisticsForm').addEventListener('submit', async function (e) {
+        e.preventDefault(); // Prevent the default form submission
+
+        const form = e.target;
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch("{% url 'im:calculate_statistics' %}", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRFToken": formData.get('csrfmiddlewaretoken'),
+                },
+            });
+
+            const result = await response.json();
+            const messageDiv = document.getElementById('responseMessage');
+            if (response.ok) {
+                messageDiv.style.color = "green";
+                messageDiv.textContent = result.message;
+            } else {
+                messageDiv.style.color = "red";
+                messageDiv.textContent = result.error || "An error occurred.";
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            document.getElementById('responseMessage').textContent = "An error occurred.";
+        }
+    });
+</script>

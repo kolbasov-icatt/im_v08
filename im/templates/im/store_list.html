@@ -1,0 +1,9 @@
+{% extends "im/base.html" %}
+{% block title %}My Blog{% endblock %}
+{% block content %}
+  <h1>Stores</h1>
+  {% for store in stores %}
+    {{ store }}
+  {% endfor %}
+{% endblock %}
+

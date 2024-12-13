@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ product.name }}</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        table {
+            width: 60%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        caption {
+            font-size: 1.5em;
+            margin: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Product: {{ product.name }}</h1>
+    <p><strong>SKU:</strong> {{ product.sku }}</p>
+    <p><strong>Weight:</strong> {{ product.weight }} kg.</p>
+    <p><strong>Volume:</strong> {{ product.volume }} l.</p>
+    <p><strong>Sales Nov24:</strong> {{ sales24.10 }}</p>
+    <p><strong>Sales Nsk Nov24:</strong> {{ sales_nsk24.10 }}</p>
+    <p><strong>Sales Kem Nov24:</strong> {{ sales_kem24.10 }}</p>
+    <p><strong>Sales 24:</strong> {{ sales24 }}</p>
+    <p><strong>Sales Nsk 24:</strong> {{ sales_nsk24 }}</p>
+    <p><strong>Sales Kem 24:</strong> {{ sales_kem24 }}</p>
+    <p><strong>Sales 23:</strong> {{ sales23 }}</p>
+    <p><strong>Sales Nsk 23:</strong> {{ sales_nsk23 }}</p>
+    <p><strong>Sales Kem 23:</strong> {{ sales_kem23 }}</p>
+
+    <!-- <table>
+        <caption>Sales Overview for November 2024</caption>
+        <thead>
+            <tr>
+                <th>Location</th>
+                <th>Nov 2024</th>
+                <th>Total 2024</th>
+                <th>Difference</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Novosibirsk</td>
+                <td>{{ sales_nsk }}</td>
+                <td>{{ sales_nsk24 }}</td>
+                <td>{{ sales_nsk24|add:"-"|add:sales_nsk }}</td>
+            </tr>
+            <tr>
+                <td>Kemerovo</td>
+                <td>{{ sales_kem }}</td>
+                <td>{{ sales_kem24 }}</td>
+                <td>{{ sales_kem24|add:"-"|add:sales_kem }}</td>
+            </tr>
+            <tr>
+                <td>Total</td>
+                <td>{{ sales }}</td>
+                <td>{{ sales24 }}</td>
+                <td>{{ sales24|add:"-"|add:sales }}</td>
+            </tr>
+        </tbody>
+    </table> -->
+
+
+    <button id="simulate-demand" data-product-id="{{ product.id }}">Simulate Demand</button>
+
+    <div id="simulation-results">
+        <!-- Simulation results will be displayed here -->
+    </div>
+
+    <div id="simulation-results">
+        <h2>Simulation Results</h2>
+        <!-- <canvas id="demandChart" width="400" height="200"></canvas>         -->
+    </div>
+    <script>
+        $(document).ready(function () {
+            $('#simulate-demand').on('click', function () {
+                const productId = $(this).data('product-id');
+                $.ajax({
+                    url: "{% url 'im:simulate_demand' %}",
+                    method: "POST",
+                    data: {
+                        product_id: productId,
+                        csrfmiddlewaretoken: "{{ csrf_token }}"
+                    },
+                    success: function (response) {
+                        $('#simulation-results').html(`
+                            <h2>Simulation Results</h2>
+                            <p>Demand: ${response.demand.join(', ')}</p>
+                        `);
+                    },
+                    error: function (xhr, status, error) {
+                        $('#simulation-results').html(`
+                            <p style="color: red;">An error occurred: ${error}</p>
+                        `);
+                    }
+                });
+            });
+        });
+    </script>
+
+
+    <!-- <script>
+        $(document).ready(function () {
+            $('#simulate-demand').on('click', function () {
+                const productId = $(this).data('product-id');
+                $.ajax({
+                    url: "{% url 'im:simulate_demand' %}",
+                    method: "POST",
+                    data: {
+                        product_id: productId,
+                        csrfmiddlewaretoken: "{{ csrf_token }}"
+                    },
+                    success: function (response) {
+                        const demand = response.demand;
+    
+                        // Create the chart
+                        const ctx = document.getElementById('demandChart').getContext('2d');
+                        
+                        // Destroy the chart if it already exists (to avoid duplicates)
+                        if (window.demandChart) {
+                            window.demandChart.destroy();
+                        }
+    
+                        // Generate the chart
+                        window.demandChart = new Chart(ctx, {
+                            type: 'line', // You can also use 'bar', 'radar', etc.
+                            data: {
+                                labels: Array.from({ length: demand.length }, (_, i) => `Period ${i + 1}`),
+                                datasets: [{
+                                    label: 'Simulated Demand',
+                                    data: demand,
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                    borderWidth: 2,
+                                    fill: true
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: {
+                                        display: true
+                                    },
+                                    tooltip: {
+                                        mode: 'index',
+                                        intersect: false
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        title: {
+                                            display: true,
+                                            text: 'Period'
+                                        }
+                                    },
+                                    y: {
+                                        title: {
+                                            display: true,
+                                            text: 'Demand Quantity'
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        $('#simulation-results').html(`
+                            <p style="color: red;">An error occurred: ${error}</p>
+                        `);
+                    }
+                });
+            });
+        });
+    </script> -->
+
+    
+   
+</body>
+</html>
