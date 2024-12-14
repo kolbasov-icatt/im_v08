@@ -4,10 +4,11 @@ from datetime import datetime
 from .models import Product
 from im.utils_oracle import OracleAgent
 from im.utils_stat import get_month_sales_by_location, calculate_sales_statistics, calculate_sales_global_statistics
-
+from im.quaries import get_top_products_by_sales
 import os
 import pandas as pd
 from datetime import datetime
+
 
 def place_order(selected_months):
     """
@@ -67,8 +68,9 @@ def place_order(selected_months):
         for year, month in selected_months
     }
 
-    mannol_products = Product.objects.filter(manufacturer="mannol")
-    #mannol_products = Product.objects.filter(sku=1021)
+    q =  get_top_products_by_sales(221)
+    skus = q.values_list('product__sku', flat=True)
+    mannol_products = Product.objects.filter(sku__in=skus)
     for product in mannol_products: # Product.objects.all()
         agent = OracleAgent(product)
         actions = agent.get_actions()
@@ -106,7 +108,30 @@ def place_order(selected_months):
 
     # Create dataframe and save to Excel
     df = pd.DataFrame(order)
-    output_path = os.path.join(output_dir, f'order_{date}.xlsx')
-    df.to_excel(output_path, index=False)
-    print(f"Order saved to {output_path}")
-    return df
+    
+    ######### save locally
+    #output_path = os.path.join(output_dir, f'order_{date}.xlsx')
+    #df.to_excel(output_path, index=False)
+    #print(f"Order saved to {output_path}")
+
+    df_nsk_order = df.query('order_nsk > 0')[['sku', 'name', 'order_nsk', 'order_nsk_weight']]
+    df_kem_order = df.query('order_kem > 0')[['sku', 'name', 'order_kem', 'order_kem_weight']]
+
+    return df, df_nsk_order, df_kem_order
+
+def calculate_order_weight(df) -> dict:
+    """
+    Example output:
+        {
+            "nsk: 960,
+            "kem": 0
+        }
+    """
+    order_weight = {
+        'nsk': df.order_nsk_weight.sum(), 
+        'kem': df.order_kem_weight.sum(), 
+        }
+    order_weight_of_ones = {'nsk': 0, 'kem': 0}
+    
+      
+    return order_weight, order_weight_of_ones

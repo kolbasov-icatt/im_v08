@@ -8,6 +8,8 @@ import pandas as pd
 import tempfile
 import os
 from itertools import accumulate
+import zipfile
+
 
 from .models import Product, Store, Sale, Inventory, WorkingDays
 from .forms import ExcelUploadForm, ExcelUploadSaleForm, ExcelUploadInventoryForm, ExcelUploadWorkingDaysForm
@@ -111,41 +113,48 @@ def homepage(request):
                     messages.success(request, "Working days uploaded successfully!")
                 except Exception as e:
                     messages.error(request, f"Error processing the file: {e}")
-        # elif 'place_order' in request.POST:
-        #     # Example: Selected months can come from a form or be predefined
-        #     selected_months = [(2024, 10), (2024, 11), (2024, 12)]  # Replace as needed
-        #     df = place_order(selected_months)
 
-        #     # Save the Excel to a temporary file
-        #     with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
-        #         temp_filename = tmp.name
-        #         df.to_excel(temp_filename, index=False)
-            
-        #     # Serve the file as a download
-        #     with open(temp_filename, 'rb') as f:
-        #         response = HttpResponse(f.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        #         response['Content-Disposition'] = f'attachment; filename="order.xlsx"'
-        #     os.remove(temp_filename)  # Clean up the temporary file
-        #     return response
-        
-
-        elif 'place_order' in request.POST:
+        if 'place_order' in request.POST:
             selected_months = [(2024, 10), (2024, 11), (2024, 12)]  # Replace as needed
-            df = place_order(selected_months)
+            df, df_nsk, df_kem = place_order(selected_months)
 
-            # Use BytesIO to create the Excel file in memory
+            # Create an Excel file with multiple sheets
             output = BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                df.to_excel(writer, index=False)
+                df.to_excel(writer, sheet_name='All Orders', index=False)
+                df_nsk.to_excel(writer, sheet_name='Novosibirsk', index=False)
+                df_kem.to_excel(writer, sheet_name='Kemerovo', index=False)
             output.seek(0)
 
-            # Use StreamingHttpResponse for chunked download
-            response = StreamingHttpResponse(
-                file_iterator(output.getvalue()),  # Generate chunks from the content
+            # Return the Excel file as an HTTP response
+            response = HttpResponse(
+                output.getvalue(),
                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
-            response['Content-Disposition'] = f'attachment; filename="order_{today}.xlsx"'
+            response['Content-Disposition'] = f'attachment; filename="orders_{today}.xlsx"'
             return response
+        
+
+        # elif 'place_order' in request.POST:
+        #     selected_months = [(2024, 10), (2024, 11), (2024, 12)]  # Replace as needed
+        #     df, df_nsk, df_kem = place_order(selected_months)
+
+        #     # Use BytesIO to create the Excel file in memory
+        #     output = BytesIO()
+        #     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        #         df.to_excel(writer, index=False)
+        #     output.seek(0)
+
+        #     # Use StreamingHttpResponse for chunked download
+        #     response = StreamingHttpResponse(
+        #         file_iterator(output.getvalue()),  # Generate chunks from the content
+        #         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        #     )
+        #     response['Content-Disposition'] = f'attachment; filename="order_{today}.xlsx"'
+
+    
+
+        #     return response
     
     else:
         form = ExcelUploadForm()
