@@ -8,7 +8,7 @@ class WorkingDays(models.Model):
 
 
 class Store(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100, unique=True, db_index=True)
     location = models.CharField(max_length=50, blank=True, null=True, help_text="Store location")
     capacity = models.FloatField(help_text="Maximum storage capacity in cubic units")
     lead_time_mean = models.FloatField(help_text="Mean lead time for deliveries in days")
@@ -23,7 +23,7 @@ class Store(models.Model):
 
 
 class Product(models.Model):
-    sku = models.CharField(max_length=100, unique=True)
+    sku = models.CharField(max_length=100, unique=True, db_index=True)
     name = models.CharField(max_length=200)
     manufacturer = models.CharField(max_length=50, default="")
     category = models.CharField(max_length=50, default="")
@@ -72,9 +72,9 @@ class ProductGlobalData(models.Model):
 
 
 class Inventory(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='inventories')
-    store  = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='inventories')    
-    date = models.DateField(help_text="Date of the inventory record")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='inventories', db_index=True)
+    store  = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='inventories', db_index=True)    
+    date = models.DateField(help_text="Date of the inventory record", db_index=True)
     inventory_level = models.FloatField(help_text="Current stock level of the product in the store")
 
     def __str__(self):

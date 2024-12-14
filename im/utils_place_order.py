@@ -24,8 +24,8 @@ def place_order(selected_months):
     # Calculate Average day sales
     start_date = "2024-11-01"
     end_date   = "2024-12-13"
-    calculate_sales_statistics(start_date, end_date)
-    calculate_sales_global_statistics(start_date, end_date)
+    #calculate_sales_statistics(start_date, end_date)
+    #calculate_sales_global_statistics(start_date, end_date)
 
     # Ensure output directory exists
     output_dir = "orders_excel"
@@ -67,7 +67,9 @@ def place_order(selected_months):
         for year, month in selected_months
     }
 
-    for product in Product.objects.all():
+    mannol_products = Product.objects.filter(manufacturer="mannol")
+    #mannol_products = Product.objects.filter(sku=1021)
+    for product in mannol_products: # Product.objects.all()
         agent = OracleAgent(product)
         actions = agent.get_actions()
 

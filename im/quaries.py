@@ -11,7 +11,8 @@ def get_top_products_by_sales(n_top=10):
         #Sale.objects.filter(sale_date__year=year, sale_date__month=month)
         .values('product__id', 'product__sku')
         .annotate(
-            total_sales_volume=Sum(F('quantity') * F('product__volume'))  # Multiply quantity by product volume
+            #total_sales_volume=Sum(F('quantity') * F('product__volume'))  # Multiply quantity by product volume
+            total_sales_volume=Sum('sale_value')  # Multiply quantity by product volume
         )
         .order_by('-total_sales_volume')[:n_top]  # Order by total sales volume
         # to extract only a list of SKUs

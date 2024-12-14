@@ -13,8 +13,8 @@ def test_seasonality(sales24: list, sales23: list):
     stat, p_value = kruskal(*monthly_sales)
 
     # Decomposition - to plot 
-    sales24_series = pd.Series(sales24, index=pd.date_range('2024-01-01', periods=11, freq='M'))
-    sales23_series = pd.Series(sales23, index=pd.date_range('2023-01-01', periods=11, freq='M'))
+    sales24_series = pd.Series(sales24, index=pd.date_range('2024-01-01', periods=11, freq='ME'))
+    sales23_series = pd.Series(sales23, index=pd.date_range('2023-01-01', periods=11, freq='ME'))
     ser = pd.concat([sales24_series, sales23_series])
     decomposition = seasonal_decompose(ser, model='additive', period=11)
     seasonal_decomposition = decomposition.seasonal

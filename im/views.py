@@ -1,8 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
-
+from io import BytesIO
 from datetime import datetime
 import pandas as pd
 import tempfile
@@ -19,7 +19,12 @@ from .utils_seasonality import test_seasonality
 from .process_excel import make_flat_table, make_flat_table_inv
 
 
+def file_iterator(data, chunk_size=512):
+    for i in range(0, len(data), chunk_size):
+        yield data[i:i+chunk_size]
+
 def homepage(request):
+    today = str(datetime.today().date())
     products_form  = ExcelUploadForm()
     sales_form     = ExcelUploadSaleForm()
     inventory_form = ExcelUploadInventoryForm()
@@ -106,22 +111,42 @@ def homepage(request):
                     messages.success(request, "Working days uploaded successfully!")
                 except Exception as e:
                     messages.error(request, f"Error processing the file: {e}")
+        # elif 'place_order' in request.POST:
+        #     # Example: Selected months can come from a form or be predefined
+        #     selected_months = [(2024, 10), (2024, 11), (2024, 12)]  # Replace as needed
+        #     df = place_order(selected_months)
+
+        #     # Save the Excel to a temporary file
+        #     with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
+        #         temp_filename = tmp.name
+        #         df.to_excel(temp_filename, index=False)
+            
+        #     # Serve the file as a download
+        #     with open(temp_filename, 'rb') as f:
+        #         response = HttpResponse(f.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        #         response['Content-Disposition'] = f'attachment; filename="order.xlsx"'
+        #     os.remove(temp_filename)  # Clean up the temporary file
+        #     return response
+        
+
         elif 'place_order' in request.POST:
-            # Example: Selected months can come from a form or be predefined
             selected_months = [(2024, 10), (2024, 11), (2024, 12)]  # Replace as needed
             df = place_order(selected_months)
 
-            # Save the Excel to a temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
-                temp_filename = tmp.name
-                df.to_excel(temp_filename, index=False)
-            
-            # Serve the file as a download
-            with open(temp_filename, 'rb') as f:
-                response = HttpResponse(f.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-                response['Content-Disposition'] = f'attachment; filename="order.xlsx"'
-            os.remove(temp_filename)  # Clean up the temporary file
+            # Use BytesIO to create the Excel file in memory
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                df.to_excel(writer, index=False)
+            output.seek(0)
+
+            # Use StreamingHttpResponse for chunked download
+            response = StreamingHttpResponse(
+                file_iterator(output.getvalue()),  # Generate chunks from the content
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = f'attachment; filename="order_{today}.xlsx"'
             return response
+    
     else:
         form = ExcelUploadForm()
     
