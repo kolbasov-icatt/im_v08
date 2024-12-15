@@ -185,9 +185,6 @@ def sales(request):
     inv_sales_ratio24 = [a / b for a, b in zip(inv24, sales24['sales'])]
     inv_sales_nsk_ratio24 = [a / b for a, b in zip(inv_nsk24, sales_nsk24['sales'])]
     inv_sales_kem_ratio24 = [a / b for a, b in zip(inv_kem24, sales_kem24['sales'])]
-    inv_sales_ratio24.append(0.35)
-    inv_sales_nsk_ratio24.append(0.43)
-    inv_sales_kem_ratio24.append(0.20)
 
     context = {
         'sales24': sales24['sales'][:-1], 'sales_nsk24': sales_nsk24['sales'][:-1], 'sales_kem24': sales_kem24['sales'][:-1],
